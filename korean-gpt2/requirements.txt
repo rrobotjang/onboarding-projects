@@ -3,3 +3,7 @@ transformers>=4.30
 datasets>=2.14
 tokenizers>=0.13
 sentencepiece
+Fastapi
+uvicorn
+ibm-watson
+ibm-cloud-sdk-core

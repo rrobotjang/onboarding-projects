@@ -11,6 +11,11 @@ import argparse
 import math
 import os
 import time
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
 
 import torch
 from torch.utils.data import DataLoader
@@ -101,7 +106,8 @@ def train(args):
     )
 
     # Cosine learning rate scheduler with warmup
-    total_steps = args.epochs * len(dataloader)
+    # Calculate effective update steps (total dataset chunks / effective batch size)
+    total_steps = args.epochs * (len(dataloader) // args.grad_accum_steps)
     warmup_steps = min(args.warmup_steps, total_steps // 10)
 
     def lr_lambda(step):
@@ -111,6 +117,8 @@ def train(args):
         return 0.5 * (1.0 + math.cos(math.pi * progress))
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+    
+    optimizer.zero_grad() # Initialize gradients as zero
 
     # ------------------------------------------------------------------ #
     # Training loop
@@ -139,20 +147,29 @@ def train(args):
             labels = batch["labels"].to(device)
 
             # Forward
+            if batch_idx == 0:
+                logger.info(f"🚀 First batch - Input shape: {input_ids.shape}, Device: {input_ids.device}")
+            
             logits, loss = model(input_ids, targets=labels)
-
+            
+            # Scale loss by accumulation steps
+            loss = loss / args.grad_accum_steps
+            
             # Backward
-            optimizer.zero_grad()
             loss.backward()
 
-            # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
+            # Update weights only every grad_accum_steps
+            if (batch_idx + 1) % args.grad_accum_steps == 0 or (batch_idx + 1) == len(dataloader):
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
 
-            optimizer.step()
-            scheduler.step()
-
-            epoch_loss += loss.item()
-            global_step += 1
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
+                
+                global_step += 1
+            
+            epoch_loss += loss.item() * args.grad_accum_steps
 
             # Logging
             if (batch_idx + 1) % args.log_every == 0:
@@ -163,12 +180,26 @@ def train(args):
                     (batch_idx + 1) * args.batch_size * args.seq_len / elapsed
                 )
                 print(
-                    f"  Epoch {epoch+1}/{args.epochs} | "
-                    f"Step {batch_idx+1}/{len(dataloader)} | "
-                    f"Loss: {loss.item():.4f} (avg: {avg_loss:.4f}) | "
-                    f"LR: {lr:.2e} | "
                     f"Tok/s: {tokens_per_sec:,.0f}"
                 )
+
+            # Step-based checkpointing (Safety net for long training)
+            if global_step % args.save_every == 0:
+                ckpt_path = os.path.join(args.checkpoint_dir, f"checkpoint_step_{global_step}.pt")
+                # Also maintain a symlink-style 'latest' pointer
+                latest_path = os.path.join(args.checkpoint_dir, "latest_model.pt")
+                
+                checkpoint_data = {
+                    "epoch": epoch + 1,
+                    "step": global_step,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "config": config,
+                    "loss": loss.item(),
+                }
+                torch.save(checkpoint_data, ckpt_path)
+                torch.save(checkpoint_data, latest_path)
+                print(f"💾 Step {global_step} | Periodic checkpoint saved to {ckpt_path}")
 
         # End of epoch
         avg_epoch_loss = epoch_loss / len(dataloader)
@@ -245,7 +276,8 @@ def main():
 
     # Training
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=4, help="Micro-batch size (8GB Mac needs 4 or 8)")
+    parser.add_argument("--grad_accum_steps", type=int, default=8, help="Accumulate gradients (Total batch = batch_size * grad_accum_steps)")
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--weight_decay", type=float, default=0.1)
     parser.add_argument("--grad_clip", type=float, default=1.0)
@@ -253,6 +285,7 @@ def main():
 
     # Logging & checkpoints
     parser.add_argument("--log_every", type=int, default=50)
+    parser.add_argument("--save_every", type=int, default=5000)
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
     parser.add_argument("--generate_every_epoch", action="store_true", default=True)
 

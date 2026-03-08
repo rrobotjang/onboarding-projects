@@ -33,7 +33,8 @@ def load_korean_wikipedia(
     """Load Korean Wikipedia articles."""
     print("📚 Loading Korean Wikipedia...")
     ds = load_dataset(
-        "devngho/korean_wikipedia",
+        "wikimedia/wikipedia",
+        "20231101.ko",
         split=split,
         streaming=streaming,
         trust_remote_code=True,

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Korean GPT-2 Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons for UI elements -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="chat-header">
+            <div class="header-content">
+                <i class="ph-fill ph-robot"></i>
+                <div class="header-titles">
+                    <h1>Korean GPT-2</h1>
+                    <span class="status-badge">
+                        <span class="dot pulse"></span>
+                        <span id="connection-status">Online</span>
+                        <span id="mock-badge" class="badge hidden">Mock Mode</span>
+                    </span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="toggle-voice-out" class="icon-btn active" title="Toggle Voice Output">
+                    <i class="ph-fill ph-speaker-high"></i>
+                </button>
+                <button id="reload-model" class="icon-btn" title="Reload Model Brain">
+                    <i class="ph ph-arrows-clockwise"></i>
+                </button>
+                <button id="clear-chat" class="icon-btn" title="Clear Conversation">
+                    <i class="ph ph-trash"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="chat-container" class="chat-container">
+            <div class="welcome-message">
+                <div class="welcome-icon">
+                    <i class="ph-fill ph-sparkle"></i>
+                </div>
+                <h2>안녕하세요!</h2>
+                <p>한국어 데이터로 처음부터 학습된 GPT-2 모델입니다. 무엇을 도와드릴까요?</p>
+                <div class="suggestion-chips">
+                    <button class="chip"
+                        onclick="document.getElementById('message-input').value=this.textContent; document.getElementById('send-btn').click();">한국의
+                        수도는 어디인가요?</button>
+                    <button class="chip"
+                        onclick="document.getElementById('message-input').value=this.textContent; document.getElementById('send-btn').click();">인공지능에
+                        대해 설명해줘.</button>
+                    <button class="chip"
+                        onclick="document.getElementById('message-input').value=this.textContent; document.getElementById('send-btn').click();">간단한
+                        파이썬 코드 예시를 보여줘.</button>
+                </div>
+            </div>
+            <!-- Chat messages will be injected here -->
+        </main>
+
+        <footer class="input-area">
+            <div class="input-wrapper">
+                <button id="mic-btn" class="icon-btn mic-btn" title="Hold to record voice">
+                    <i class="ph-fill ph-microphone"></i>
+                </button>
+                <textarea id="message-input" placeholder="메시지 입력 (음성: 마이크 클릭, 전송: Enter)" rows="1" autofocus></textarea>
+                <button id="send-btn" class="send-btn" disabled>
+                    <i class="ph-bold ph-paper-plane-right"></i>
+                </button>
+            </div>
+            <div class="footer-meta">
+                <span>Korean GPT-2 • WatsonX Voice Integrated</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notice Modal for Server State -->
+    <div id="notice-modal" class="modal hidden">
+        <div class="modal-content">
+            <i class="ph-fill ph-warning-circle"></i>
+            <h3>서버 연결 실패</h3>
+            <p>백엔드 서버와 통신할 수 없습니다. <code>python3 server.py</code>가 실행 중인지 확인해주세요.</p>
+            <button id="close-modal" class="primary-btn">확인</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

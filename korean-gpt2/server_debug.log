@@ -1,0 +1,96 @@
+INFO:server:⚠️ Watson credentials not found. Enabling MOCK MODE for STT/TTS UI testing.
+INFO:     Started server process [95594]
+INFO:     Waiting for application startup.
+INFO:server:🖥️ Chatbot utilizing CPU for inference (Training is on MPS)
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/skt/kogpt2-base-v2/d0c0df48bf2b2c9350dd855021a5b216f560c0c7/config.json "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/skt/kogpt2-base-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/skt/kogpt2-base-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/vocab.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/merges.txt "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/special_tokens_map.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/skt/kogpt2-base-v2/d0c0df48bf2b2c9350dd855021a5b216f560c0c7/tokenizer.json "HTTP/1.1 200 OK"
+WARNING:server:⚠️ No checkpoints found. Running with random weights for UI testing.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+GPT-2 model initialized with 8.27M parameters
+INFO:     127.0.0.1:51561 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51563 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51563 - "GET /static/style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51566 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51566 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51566 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:server:🖥️ Chatbot utilizing CPU for inference (Training is on MPS)
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/skt/kogpt2-base-v2/d0c0df48bf2b2c9350dd855021a5b216f560c0c7/config.json "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/skt/kogpt2-base-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/skt/kogpt2-base-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/vocab.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/merges.txt "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/special_tokens_map.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/skt/kogpt2-base-v2/d0c0df48bf2b2c9350dd855021a5b216f560c0c7/tokenizer.json "HTTP/1.1 200 OK"
+WARNING:server:⚠️ No checkpoints found. Running with random weights for UI testing.
+GPT-2 model initialized with 8.27M parameters
+INFO:     127.0.0.1:51592 - "POST /api/reload HTTP/1.1" 200 OK
+INFO:server:STT Mock: Returning placeholder text.
+INFO:     127.0.0.1:51628 - "POST /api/stt HTTP/1.1" 200 OK
+INFO:server:Received chat request prompt (length: 53)
+INFO:     127.0.0.1:51628 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:server:TTS Mock: Returning silent placeholder audio.
+INFO:     127.0.0.1:51628 - "POST /api/tts HTTP/1.1" 200 OK
+INFO:server:Received chat request prompt (length: 34)
+INFO:     127.0.0.1:51679 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:server:TTS Mock: Returning silent placeholder audio.
+INFO:     127.0.0.1:51679 - "POST /api/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51714 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51714 - "GET /static/style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51716 - "GET /static/app.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51716 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55408 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55408 - "GET /static/style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55409 - "GET /static/app.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55409 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55815 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55815 - "GET /api/status HTTP/1.1" 200 OK
+INFO:server:STT Mock: Returning placeholder text.
+INFO:     127.0.0.1:55835 - "POST /api/stt HTTP/1.1" 200 OK
+INFO:server:Received chat request prompt (length: 53)
+INFO:     127.0.0.1:55836 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:server:TTS Mock: Returning silent placeholder audio.
+INFO:     127.0.0.1:55836 - "POST /api/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55848 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55848 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56529 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56529 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56661 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56661 - "GET /api/status HTTP/1.1" 200 OK
+INFO:server:🖥️ Chatbot utilizing CPU for inference (Training is on MPS)
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/skt/kogpt2-base-v2/d0c0df48bf2b2c9350dd855021a5b216f560c0c7/config.json "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/skt/kogpt2-base-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/skt/kogpt2-base-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/vocab.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/merges.txt "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/special_tokens_map.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 404 Not Found"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/skt/kogpt2-base-v2/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/skt/kogpt2-base-v2/d0c0df48bf2b2c9350dd855021a5b216f560c0c7/tokenizer.json "HTTP/1.1 200 OK"
+INFO:server:📥 Loading model from checkpoints/latest_model.pt...
+INFO:server:✅ Successfully loaded: checkpoints/latest_model.pt
+GPT-2 model initialized with 20.47M parameters
+INFO:     127.0.0.1:56672 - "POST /api/reload HTTP/1.1" 200 OK

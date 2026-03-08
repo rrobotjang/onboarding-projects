@@ -42,6 +42,7 @@ class CausalSelfAttention(nn.Module):
 
     def __init__(self, config: GPT2Config):
         super().__init__()
+        self.config = config
         assert config.d_model % config.n_heads == 0, (
             f"d_model ({config.d_model}) must be divisible by n_heads ({config.n_heads})"
         )
@@ -85,17 +86,14 @@ class CausalSelfAttention(nn.Module):
         k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
 
-        # Scaled dot-product attention
-        # att = (Q @ K^T) / sqrt(head_dim)
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
-
-        # Apply causal mask: fill future positions with -inf
-        att = att.masked_fill(self.causal_mask[:, :, :T, :T] == 0, float("-inf"))
-        att = F.softmax(att, dim=-1)
-        att = self.attn_dropout(att)
-
-        # Weighted sum of values
-        y = att @ v  # (B, n_heads, T, head_dim)
+        # Optimized scaled dot-product attention using PyTorch 2.0+ kernels
+        # This automatically uses FlashAttention or optimized MPS/CUDA kernels
+        y = F.scaled_dot_product_attention(
+            q, k, v,
+            attn_mask=None, # Not needed if is_causal=True
+            dropout_p=self.config.dropout if self.training else 0.0,
+            is_causal=True
+        )
 
         # Concatenate heads and project
         y = y.transpose(1, 2).contiguous().view(B, T, C)
@@ -187,18 +185,36 @@ class GPT2(nn.Module):
         # Initialize weights
         self.apply(self._init_weights)
 
-        # Apply special scaled init to residual projections (per GPT-2 paper)
-        for pn, p in self.named_parameters():
-            if pn.endswith("c_proj.weight"):
-                nn.init.normal_(
-                    p, mean=0.0, std=0.02 / math.sqrt(2 * config.n_layers)
-                )
+    def resize_token_embeddings(self, new_num_tokens: int):
+        """
+        Resizes input token embeddings and the output head.
+        Used when adding special tokens to the tokenizer.
+        """
+        old_embeddings = self.transformer.wte
+        new_embeddings = nn.Embedding(new_num_tokens, self.config.d_model)
+        
+        # Initialize new embeddings
+        nn.init.normal_(new_embeddings.weight, mean=0.0, std=0.02)
+        
+        # Copy old weights
+        num_tokens_to_copy = min(old_embeddings.num_embeddings, new_num_tokens)
+        new_embeddings.weight.data[:num_tokens_to_copy, :] = old_embeddings.weight.data[:num_tokens_to_copy, :]
+        
+        # Update model
+        self.transformer.wte = new_embeddings
+        self.lm_head = nn.Linear(self.config.d_model, new_num_tokens, bias=False)
+        self.lm_head.weight = self.transformer.wte.weight # Re-tie weights
+        self.config.vocab_size = new_num_tokens
+        
+        print(f"🔄 Resized token embeddings to {new_num_tokens}")
+
+        print(f"🔄 Resized token embeddings to {new_num_tokens}")
 
         # Report number of parameters
         n_params = sum(p.numel() for p in self.parameters())
         # Subtract weight-tied params (counted once in wte, once in lm_head)
-        n_params -= self.transformer.wpe.weight.numel()
-        print(f"GPT-2 model initialized with {n_params / 1e6:.2f}M parameters")
+        # We don't subtract here to see the total including tied head
+        print(f"GPT-2 model resized: {n_params / 1e6:.2f}M parameters")
 
     def _init_weights(self, module: nn.Module):
         """Initialize weights following GPT-2 conventions."""
