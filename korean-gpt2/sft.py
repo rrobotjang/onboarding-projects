@@ -123,34 +123,7 @@ def train(args):
 
             epoch_loss += loss.item() * args.grad_accum_steps
 
-            if (batch_idx + 1) % args.log_every == 0:
-                avg_loss = epoch_loss / (batch_idx + 1)
-                print(
-                    f"  Epoch {epoch+1} | "
-                    f"Step {batch_idx+1}/{len(dataloader)} | "
-                    f"SFT Loss: {loss.item():.4f} (avg: {avg_loss:.4f}) | "
-                    f"LR: {scheduler.get_last_lr()[0]:.2e}"
-                )
-
-        avg_epoch_loss = epoch_loss / len(dataloader)
-        print(f"\n📊 Epoch {epoch+1} complete | Avg loss: {avg_epoch_loss:.4f} | Time: {time.time() - epoch_start:.1f}s")
-
-        # Save Checkpoint
-        if avg_epoch_loss < best_loss:
-            best_loss = avg_epoch_loss
-            ckpt_path = os.path.join(args.output_dir, "chat_model_best.pt")
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "config": config,
-                    "loss": best_loss,
-                },
-                ckpt_path,
-            )
-            print(f"💾 Saved best SFT checkpoint to {ckpt_path}")
-
-        # Step-based periodic saving
+            # Step-based periodic saving (Moved out of epoch end block to step loop)
             if (batch_idx + 1) % args.save_every == 0:
                 latest_path = os.path.join(args.output_dir, "latest_sft.pt")
                 torch.save(
@@ -164,6 +137,24 @@ def train(args):
                     latest_path,
                 )
                 print(f"💾 Step {batch_idx+1} | SFT progress saved to {latest_path}")
+
+        avg_epoch_loss = epoch_loss / len(dataloader)
+        print(f"\n📊 Epoch {epoch+1} complete | Avg loss: {avg_epoch_loss:.4f} | Time: {time.time() - epoch_start:.1f}s")
+
+        # Save Best Checkpoint
+        if avg_epoch_loss < best_loss:
+            best_loss = avg_epoch_loss
+            ckpt_path = os.path.join(args.output_dir, "chat_model_best.pt")
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "config": config,
+                    "loss": best_loss,
+                },
+                ckpt_path,
+            )
+            print(f"💾 Saved best SFT checkpoint to {ckpt_path}")
 
         # Test Generation (Reasoning)
         model.eval()

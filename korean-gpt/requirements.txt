@@ -1,0 +1,10 @@
+pandas>=2.0.0
+numpy>=1.24.0
+yfinance>=0.2.36
+scipy>=1.11.0
+matplotlib>=3.7.0
+ta>=0.11.0
+tqdm>=4.66.0
+pyarrow>=14.0.0
+# Ray is optional/unsupported on 3.14, using standard multiprocessing
+# ray[default]>=2.9.0
