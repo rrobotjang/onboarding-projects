@@ -12,27 +12,25 @@ Format used:
 <|assistant|>
 [Answer]<|endoftext|>
 """
-
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, IterableDataset
 from datasets import load_dataset
 from transformers import PreTrainedTokenizer
 
 from .tokenizer import get_tokenizer
 
-
-class InstructionDataset(Dataset):
+class InstructionDataset(IterableDataset):
     """
-    Formats instruction/response pairs for SFT.
-    Only the loss on the <|assistant|> response part is computed during training.
+    Formats instruction/response pairs for SFT in streaming mode.
+    Only the loss on the assistant response part is computed.
     """
-
     def __init__(
         self,
         dataset,
         tokenizer: PreTrainedTokenizer,
         seq_len: int = 1024,
     ):
+        self.dataset = dataset
         self.tokenizer = tokenizer
         self.seq_len = seq_len
         self.eos_id = tokenizer.eos_token_id
@@ -41,94 +39,85 @@ class InstructionDataset(Dataset):
         self.thought_token = "\n<|thought|>\n"
         self.assistant_token = "\n<|assistant|>\n"
 
-        print(f"🔤 Formatting {len(dataset)} instruction pairs...")
-        self.examples = []
-
-        for i, row in enumerate(dataset):
-            # Support different column naming conventions
+    def __iter__(self):
+        for row in self.dataset:
+            # Handle standard formats
             instruction = row.get("instruction") or row.get("question", "")
             input_text = row.get("input", "")
             output_text = row.get("output") or row.get("response", "")
-            thought = row.get("thought") or row.get("reasoning", "") # For Reasoning datasets
-
-            # Combine instruction and input if both exist
-            if input_text and str(input_text).strip():
-                prompt = f"{instruction}\n\n{input_text}"
+            thought = row.get("thought") or row.get("reasoning", "")
+            
+            # Handle heegyu/open-korean-instructions format (<usr>...<bot>...)
+            text_field = row.get("text", "")
+            if "<usr>" in text_field and "<bot>" in text_field:
+                try:
+                    parts = text_field.split("<bot>")
+                    prompt = parts[0].replace("<usr>", "").strip()
+                    output_text = parts[1].strip()
+                    thought = "" # No thought in this dataset
+                except:
+                    continue
             else:
-                prompt = instruction
+                if input_text and str(input_text).strip():
+                    prompt = f"{instruction}\n\n{input_text}"
+                else:
+                    prompt = instruction
 
             if not prompt or not output_text:
                 continue
 
-            # Format: <|user|>\n [Prompt] \n<|thought|>\n [Reasoning] \n<|assistant|>\n [Completion] <|endoftext|>
             if thought:
                 full_text = f"{self.user_token}{prompt}{self.thought_token}{thought}{self.assistant_token}{output_text}"
             else:
-                # Fallback to simple format if no thought
                 full_text = f"{self.user_token}{prompt}{self.assistant_token}{output_text}"
             
-            # Encode
-            token_ids = tokenizer.encode(full_text)
-            token_ids.append(self.eos_id)
+            # Optimization: Character-level early exit to avoid tokenizing massive texts
+            # Average 2-3 chars per token for Korean. If > 5000 chars, it's likely > 2000 tokens.
+            if len(full_text) > 5000:
+                continue
 
-            # We need to compute loss ONLY on the assistant's output + thought, not the user's prompt.
-            # Find where the prompt ends
+            # Tokenize prompt first to get correct mask length
             prompt_marker = f"{self.user_token}{prompt}"
-            prompt_ids = tokenizer.encode(prompt_marker)
+            if thought:
+                 prompt_marker += f"{self.thought_token}{thought}"
+            prompt_marker += self.assistant_token
+            
+            prompt_ids = self.tokenizer.encode(prompt_marker, truncation=True, max_length=self.seq_len)
             prompt_len = len(prompt_ids)
 
-            # Truncate if too long (leave room for at least 1 response token)
+            # Optimization: Skip if prompt alone consumes most of the context
+            if prompt_len >= self.seq_len - 10: 
+                continue
+
+            # Tokenize full text with efficient truncation
+            token_ids = self.tokenizer.encode(full_text, truncation=True, max_length=self.seq_len)
+            token_ids.append(self.eos_id)
             if len(token_ids) > self.seq_len:
-                if prompt_len >= self.seq_len - 1:
-                    continue  # Prompt is too long to fit, skip this example
                 token_ids = token_ids[:self.seq_len]
 
-            self.examples.append({
-                "input_ids": token_ids,
-                "prompt_len": prompt_len,
-            })
+            pad_len = self.seq_len - len(token_ids)
+            padded_tokens = token_ids + [self.eos_id] * pad_len
 
-            if (i + 1) % 10000 == 0:
-                print(f"  Processed {i + 1}/{len(dataset)} examples...")
+            x = torch.tensor(padded_tokens[:-1], dtype=torch.long)
+            y = torch.tensor(padded_tokens[1:], dtype=torch.long)
 
-        print(f"✅ Filtered to {len(self.examples)} valid examples.")
-
-    def __len__(self) -> int:
-        return len(self.examples)
-
-    def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        example = self.examples[idx]
-        tokens = example["input_ids"]
-        prompt_len = example["prompt_len"]
-
-        # Pad sequence to max length
-        pad_len = self.seq_len - len(tokens)
-        pad_id = self.eos_id  # Use EOS as PAD if needed
-        padded_tokens = tokens + [pad_id] * pad_len
-
-        x = torch.tensor(padded_tokens[:-1], dtype=torch.long)
-        y = torch.tensor(padded_tokens[1:], dtype=torch.long)
-
-        # Mask out the prompt and padding from the loss calculation
-        # PyTorch cross_entropy ignores index -1
-        mask = torch.ones_like(y)
-        # 1. Mask the prompt
-        mask[:prompt_len - 1] = 0
-        # 2. Mask the padding
-        if pad_len > 0:
-            mask[-pad_len:] = 0
+            mask = torch.ones_like(y)
+            mask[:prompt_len - 1] = 0
+            if pad_len > 0:
+                mask[-pad_len:] = 0
+                
+            y = y.masked_fill(mask == 0, -1)
             
-        y = y.masked_fill(mask == 0, -1)
-
-        return {"input_ids": x, "labels": y}
-
+            # Final check before yielding: do we actually have something to train on?
+            if (y != -1).any():
+                yield {"input_ids": x, "labels": y}
 
 class SFTPipeline:
     def __init__(
         self,
-        dataset_name: str = "llami-team/Korean-OpenThoughts-114k-Normalized",
+        dataset_name: str = "heegyu/open-korean-instructions",
         tokenizer: PreTrainedTokenizer = None,
-        seq_len: int = 1024,
+        seq_len: int = 512,
         max_samples: int = None,
     ):
         self.dataset_name = dataset_name
@@ -136,16 +125,15 @@ class SFTPipeline:
         self.seq_len = seq_len
         self.max_samples = max_samples
 
-    def build_dataset(self) -> InstructionDataset:
-        print("=" * 60)
-        print(f"🚀 Loading SFT dataset: {self.dataset_name}")
-        print("=" * 60)
-
-        # Load from Hugging Face
-        ds = load_dataset(self.dataset_name, split="train")
+    def get_dataloader(self, batch_size: int = 1, shuffle: bool = True) -> DataLoader:
+        print(f"🚀 Loading SFT dataset (Streaming): {self.dataset_name}")
+        ds = load_dataset(self.dataset_name, split="train", streaming=True)
         
+        if shuffle:
+            ds = ds.shuffle(seed=42, buffer_size=10)
+            
         if self.max_samples:
-            ds = ds.select(range(min(len(ds), self.max_samples)))
+            ds = ds.take(self.max_samples)
 
         dataset = InstructionDataset(
             dataset=ds,
@@ -153,16 +141,11 @@ class SFTPipeline:
             seq_len=self.seq_len,
         )
 
-        return dataset
-
-    def get_dataloader(self, batch_size: int = 8, shuffle: bool = True) -> DataLoader:
-        dataset = self.build_dataset()
         return DataLoader(
             dataset,
             batch_size=batch_size,
-            shuffle=shuffle,
             num_workers=0,
-            pin_memory=True,
+            pin_memory=False,
         )
 
 

@@ -79,6 +79,7 @@ def train(args):
         d_model=args.d_model,
         d_ff=args.d_ff,
         dropout=args.dropout,
+        use_checkpointing=args.use_checkpointing,
     )
     model = GPT2(config).to(device)
 
@@ -269,19 +270,20 @@ def main():
 
     # Model
     parser.add_argument("--n_layers", type=int, default=12)
-    parser.add_argument("--n_heads", type=int, default=12)
-    parser.add_argument("--d_model", type=int, default=768)
-    parser.add_argument("--d_ff", type=int, default=3072)
+    parser.add_argument("--n_heads", type=int, default=16)
+    parser.add_argument("--d_model", type=int, default=1024)
+    parser.add_argument("--d_ff", type=int, default=4096)
     parser.add_argument("--dropout", type=float, default=0.1)
 
     # Training
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=4, help="Micro-batch size (8GB Mac needs 4 or 8)")
-    parser.add_argument("--grad_accum_steps", type=int, default=8, help="Accumulate gradients (Total batch = batch_size * grad_accum_steps)")
-    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--grad_accum_steps", type=int, default=16)
+    parser.add_argument("--lr", type=float, default=6e-4) 
     parser.add_argument("--weight_decay", type=float, default=0.1)
     parser.add_argument("--grad_clip", type=float, default=1.0)
     parser.add_argument("--warmup_steps", type=int, default=500)
+    parser.add_argument("--use_checkpointing", action="store_true", default=True)
 
     # Logging & checkpoints
     parser.add_argument("--log_every", type=int, default=50)

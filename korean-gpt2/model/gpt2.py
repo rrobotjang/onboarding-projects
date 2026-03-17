@@ -16,20 +16,22 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint # For Gradient Checkpointing
 
 
 @dataclass
 class GPT2Config:
     """Configuration for GPT-2 model."""
 
-    vocab_size: int = 50257  # Will be overridden by Korean tokenizer
-    max_seq_len: int = 1024
-    n_layers: int = 12
-    n_heads: int = 12
-    d_model: int = 768
-    d_ff: int = 3072  # 4 * d_model
+    vocab_size: int = 51204  # Updated for special tokens
+    max_seq_len: int = 1024  # Reduced for stability
+    n_layers: int = 12       # GPT-2 Small standard
+    n_heads: int = 12        
+    d_model: int = 768       # Hidden size
+    d_ff: int = 3072         # 4 * d_model
     dropout: float = 0.1
-    bias: bool = True  # True for GPT-2 faithfulness, False for modern practice
+    bias: bool = True
+    use_checkpointing: bool = False # For memory efficiency
 
 
 class CausalSelfAttention(nn.Module):
@@ -258,7 +260,10 @@ class GPT2(nn.Module):
 
         # Pass through transformer blocks
         for block in self.transformer.h:
-            x = block(x)
+            if self.config.use_checkpointing and self.training:
+                x = checkpoint(block, x, use_reentrant=False)
+            else:
+                x = block(x)
 
         # Final layer norm
         x = self.transformer.ln_f(x)
